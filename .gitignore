@@ -74,6 +74,12 @@ datasets/
 *.pkl
 *.joblib
 *.npy
+.chroma/
+faiss_index/
+.qdrant/
+*.db
+*.sqlite3
+index_cache/
 
 # -------------------------------
 

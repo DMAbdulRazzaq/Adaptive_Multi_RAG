@@ -40,8 +40,9 @@ class DocumentLoader:
             doc = fitz.open(path)
             meta = doc.metadata or {}
             text = "\n\n".join(p.get_text("text") for p in doc)
+            page_count = doc.page_count
             doc.close()
-            return text, {"title":meta.get("title",""),"page_count":doc.page_count,"source":"pymupdf"}
+            return text, {"title":meta.get("title",""),"page_count":page_count,"source":"pymupdf"}
         except ImportError:
             try:
                 import pdfplumber

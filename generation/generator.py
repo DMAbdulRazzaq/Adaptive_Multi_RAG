@@ -16,7 +16,7 @@ class LLMGenerator:
 Answer the question using ONLY the provided context.
 If context lacks information, say so. Do not fabricate information."""
 
-    def __init__(self, backend="mock", model_name="gpt-3.5-turbo",
+    def __init__(self, backend="ollama", model_name="phi3",
                  temperature=0.2, max_new_tokens=512, api_base=None):
         self.backend = backend
         self.model_name = model_name
@@ -31,6 +31,8 @@ If context lacks information, say so. Do not fabricate information."""
             answer, usage = self._openai(prompt)
         elif self.backend == "huggingface":
             answer, usage = self._hf(prompt)
+        elif self.backend == "ollama":
+            answer, usage = self._ollama(prompt)
         else:
             answer, usage = self._mock(context)
         confidence = self._confidence(answer, context.context_text)
@@ -77,6 +79,37 @@ If context lacks information, say so. Do not fabricate information."""
         full = f"[INST] {self.SYSTEM_PROMPT}\n\n{prompt} [/INST]"
         out = self._pipeline(full)[0]["generated_text"]
         return out[len(full):].strip(), {"model": self.model_name}
+
+    def _ollama(self, prompt):
+        import urllib.request
+        import json
+        
+        api_url = self.api_base or "http://localhost:11434/api/generate"
+        payload = {
+            "model": self.model_name,
+            "prompt": f"{self.SYSTEM_PROMPT}\n\n{prompt}",
+            "stream": False,
+            "options": {
+                "temperature": self.temperature,
+                "num_predict": self.max_new_tokens
+            }
+        }
+        
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(api_url, data=data, headers={"Content-Type": "application/json"})
+        
+        try:
+            with urllib.request.urlopen(req, timeout=120) as response:
+                result = json.loads(response.read().decode("utf-8"))
+                ans = result.get("response", "").strip()
+                usage = {
+                    "prompt_tokens": result.get("prompt_eval_count", 0),
+                    "completion_tokens": result.get("eval_count", 0),
+                    "total_tokens": result.get("prompt_eval_count", 0) + result.get("eval_count", 0)
+                }
+                return ans, usage
+        except Exception as e:
+            return f"Error connecting to Ollama: {e}", {"model": self.model_name}
 
     def _mock(self, ctx):
         first = ctx.chunks[0].text[:200] if ctx.chunks else "No context."

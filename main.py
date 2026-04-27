@@ -101,8 +101,8 @@ def _confidence(answer: str) -> float:
 def run_pipeline(
     doc_path,
     question,
-    backend="mock",
-    model="gpt-3.5-turbo",
+    backend="ollama",
+    model="phi3",
     api_base=None,
     store_dir="./index_cache",
     embed_model="sentence-transformers/all-MiniLM-L6-v2",
@@ -201,19 +201,19 @@ def _print_result(result, chunks):
     print(f"  Chunks used : {result['chunks_used']}")
     print(f"  Latency     : {result['latency_seconds']} s")
     print(sep)
-    print(f"\n  ANSWER\n  {'─'*40}")
+    print(f"\n  ANSWER\n  {'-'*40}")
     for line in result["answer"].split("\n"):
         print(f"  {line}")
     print()
     if result["scores"]:
-        print(f"  EVALUATION SCORES\n  {'─'*40}")
+        print(f"  EVALUATION SCORES\n  {'-'*40}")
         for k, v in result["scores"].items():
             if isinstance(v, float):
                 print(f"  {k:<28} {v:.4f}")
             else:
                 print(f"  {k:<28} {v}")
         print()
-    print(f"  TOP RETRIEVED CHUNKS\n  {'─'*40}")
+    print(f"  TOP RETRIEVED CHUNKS\n  {'-'*40}")
     for i, chunk in enumerate(chunks[:3], 1):
         title   = chunk.section_title or "No section"
         snippet = chunk.text[:200].replace("\n", " ")
@@ -268,9 +268,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--document",    default="")
     parser.add_argument("--question",    default="")
-    parser.add_argument("--backend",     default="mock",
-                        choices=["mock", "openai", "huggingface", "stub", "auto"])
-    parser.add_argument("--model",       default="gpt-3.5-turbo")
+    parser.add_argument("--backend",     default="ollama",
+                        choices=["mock", "openai", "huggingface", "ollama", "stub", "auto"])
+    parser.add_argument("--model",       default="phi3")
     parser.add_argument("--api-base",    default=None)
     parser.add_argument("--embed-model",
                         default="sentence-transformers/all-MiniLM-L6-v2")
